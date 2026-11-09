@@ -1,0 +1,104 @@
+# TECHNOLOGY STACK – UPDATED
+
+Frontend:
+- Next.js / React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Framer Motion
+
+Backend:
+- Node.js
+- Express.js
+- TypeScript
+- RESTful API
+- JWT Authentication
+
+Database:
+- MySQL 8.0+
+- Prisma ORM
+- mysql2 driver
+- Redis for caching and learning session optimization
+
+ORM:
+- Prisma ORM
+- Database provider: mysql
+- Use Prisma migrations.
+- Use proper MySQL indexes and foreign keys.
+- Use utf8mb4 character set and utf8mb4_unicode_ci collation to support Simplified Chinese, Traditional Chinese, Pinyin, Vietnamese, and special characters.
+
+# DATABASE REQUIREMENTS
+
+Design a normalized MySQL database.
+
+Core tables:
+- users
+- roles
+- user_profiles
+- learning_levels
+- courses
+- modules
+- lessons
+- vocabulary
+- vocabulary_examples
+- vocabulary_audio
+- grammar_points
+- grammar_examples
+- exercises
+- questions
+- question_options
+- exams
+- exam_attempts
+- exam_answers
+- user_vocabulary
+- vocabulary_reviews
+- learning_progress
+- learning_streaks
+- achievements
+- user_achievements
+- reading_materials
+- audio_materials
+- speaking_attempts
+- writing_attempts
+- ai_conversations
+- ai_messages
+- user_daily_goals
+
+Database rules:
+1. Use BIGINT UNSIGNED for primary keys where appropriate.
+2. Use VARCHAR for short text fields.
+3. Use TEXT or LONGTEXT for long content.
+4. Use JSON for flexible metadata where appropriate.
+5. Use DATETIME for timestamps.
+6. Use DECIMAL for scores where precision is important.
+7. Define appropriate foreign keys.
+8. Add indexes for frequently searched fields.
+9. Prevent duplicate vocabulary records using appropriate unique constraints.
+10. Use InnoDB storage engine.
+11. Use utf8mb4 for all text tables.
+12. Design indexes for Chinese vocabulary search, Pinyin search, and Vietnamese meaning search.
+13. Use database transactions for examination submission and learning progress updates.
+
+# PRISMA CONFIGURATION
+
+Use the MySQL datasource:
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+# ENVIRONMENT
+
+DATABASE_URL="mysql://minh:[EMAIL_ADDRESS]:3306/chinese_learning_db?charset=utf8mb4&characterSetResults=utf8mb4&collation=utf8mb4_unicode_ci"
+
+# DEVELOPMENT REQUIREMENTS
+
+- Generate complete Prisma schema.
+- Generate MySQL migrations.
+- Provide seed scripts.
+- Create sample HSK learning data.
+- Include database setup instructions.
+- Ensure all CRUD operations work with MySQL.
+- Never use PostgreSQL-specific SQL syntax.
+- Test database relationships and migration integrity.

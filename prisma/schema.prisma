@@ -1,0 +1,669 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+  TEACHER
+}
+
+enum HskLevel {
+  HSK1
+  HSK2
+  HSK3
+  HSK4
+  HSK5
+  HSK6
+  HSK7_9
+}
+
+enum ExamSectionType {
+  LISTENING
+  READING
+  WRITING
+}
+
+// ==========================================
+// 1. USERS & ROLES
+// ==========================================
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  avatar        String?
+  role          Role      @default(USER)
+  roleId        String?
+  roleModel     RoleModel? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile          UserProfile?
+  flashcardDecks   FlashcardDeck[]
+  userFlashcards   UserFlashcard[]
+  examAttempts     ExamAttempt[]
+  aiConversations  AiConversation[]
+  userProgress     UserProgress[]
+  userStreaks      UserStreak[]
+  userAchievements UserAchievement[]
+  speakingAttempts SpeakingAttempt[]
+  writingAttempts  WritingAttempt[]
+  dailyGoals       UserDailyGoal[]
+
+  @@map("users")
+}
+
+model RoleModel {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  users       User[]
+
+  @@map("roles")
+}
+
+model UserProfile {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetHskLevel   HskLevel  @default(HSK1)
+  dailyGoalMinutes Int       @default(15)
+  nativeLanguage   String    @default("vi")
+  streakDays       Int       @default(0)
+  totalPoints      Int       @default(0)
+  lastActiveAt     DateTime  @default(now())
+
+  @@map("user_profiles")
+}
+
+// ==========================================
+// 2. LEARNING LEVELS, COURSES, MODULES, LESSONS
+// ==========================================
+model LearningLevel {
+  id            String   @id @default(cuid())
+  code          String   @unique // HSK1, HSK2, etc.
+  name          String
+  description   String?  @db.Text
+  order         Int      @default(1)
+  targetWords   Int      @default(150)
+  targetGrammar Int      @default(45)
+  createdAt     DateTime @default(now())
+  courses       Course[]
+
+  @@map("learning_levels")
+}
+
+model Course {
+  id              String         @id @default(cuid())
+  levelId         String?
+  learningLevel   LearningLevel? @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  title           String
+  slug            String         @unique
+  description     String?        @db.Text
+  thumbnail       String?
+  isPublished     Boolean        @default(true)
+  order           Int            @default(1)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  modules         CourseModule[]
+
+  @@map("courses")
+}
+
+model CourseModule {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?  @db.Text
+  order       Int      @default(1)
+  createdAt   DateTime @default(now())
+  lessons     Lesson[]
+
+  @@map("modules")
+}
+
+model Lesson {
+  id              String       @id @default(cuid())
+  moduleId        String
+  module          CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title           String
+  content         String?      @db.LongText
+  order           Int          @default(1)
+  durationMinutes Int          @default(20)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  exercises       Exercise[]
+
+  @@map("lessons")
+}
+
+// ==========================================
+// 3. VOCABULARY & EXAMPLES & AUDIO
+// ==========================================
+model Vocabulary {
+  id              String      @id @default(cuid())
+  simplified      String
+  traditional     String?
+  pinyin          String
+  pinyinNoTone    String?
+  meaningVi       String      @db.Text
+  meaningEn       String?     @db.Text
+  partOfSpeech    String?
+  hskLevel        HskLevel    @default(HSK1)
+  strokeCount     Int         @default(1)
+  radical         String?
+  frequency       Int         @default(0)
+  audioUrl        String?
+  dataSourceId    String?
+  dataSource      DataSource? @relation(fields: [dataSourceId], references: [id], onDelete: SetNull)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  examples        VocabularyExample[]
+  audioTracks     VocabularyAudio[]
+  flashcards      Flashcard[]
+  userFlashcards  UserFlashcard[]
+
+  @@index([simplified])
+  @@index([pinyin])
+  @@index([hskLevel])
+  @@map("vocabulary")
+}
+
+model VocabularyExample {
+  id           String     @id @default(cuid())
+  vocabularyId String
+  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  chinese      String     @db.Text
+  pinyin       String     @db.Text
+  vietnamese   String     @db.Text
+  english      String?    @db.Text
+
+  @@index([vocabularyId])
+  @@map("vocabulary_examples")
+}
+
+model VocabularyAudio {
+  id           String     @id @default(cuid())
+  vocabularyId String
+  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  audioUrl     String
+  accent       String     @default("zh-CN")
+  duration     Float?
+  createdAt    DateTime   @default(now())
+
+  @@index([vocabularyId])
+  @@map("vocabulary_audio")
+}
+
+// ==========================================
+// 4. GRAMMAR POINTS & EXAMPLES
+// ==========================================
+model GrammarPoint {
+  id             String           @id @default(cuid())
+  hskLevel       HskLevel         @default(HSK1)
+  title          String
+  pattern        String
+  explanationVi  String           @db.Text
+  explanationEn  String?          @db.Text
+  usageNotes     String?          @db.Text
+  commonMistakes String?          @db.Text
+  order          Int              @default(1)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  examples       GrammarExample[]
+
+  @@index([hskLevel])
+  @@map("grammar_points")
+}
+
+model GrammarExample {
+  id             String       @id @default(cuid())
+  grammarPointId String
+  grammarPoint   GrammarPoint @relation(fields: [grammarPointId], references: [id], onDelete: Cascade)
+  chinese        String       @db.Text
+  pinyin         String       @db.Text
+  translation    String       @db.Text
+
+  @@index([grammarPointId])
+  @@map("grammar_examples")
+}
+
+// ==========================================
+// 5. EXERCISES, QUESTIONS & OPTIONS
+// ==========================================
+model Exercise {
+  id          String     @id @default(cuid())
+  lessonId    String?
+  lesson      Lesson?    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title       String
+  description String?    @db.Text
+  type        String     @default("PRACTICE")
+  createdAt   DateTime   @default(now())
+  questions   Question[]
+
+  @@map("exercises")
+}
+
+model Question {
+  id          String           @id @default(cuid())
+  exerciseId  String?
+  exercise    Exercise?        @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  prompt      String           @db.Text
+  type        String           @default("MULTIPLE_CHOICE")
+  explanation String?          @db.Text
+  score       Decimal          @default(5.0) @db.Decimal(5, 2)
+  options     QuestionOption[]
+
+  @@map("questions")
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  content    String   @db.Text
+  isCorrect  Boolean  @default(false)
+  order      Int      @default(1)
+
+  @@map("question_options")
+}
+
+// ==========================================
+// 6. EXAMS, SECTIONS, ATTEMPTS & ANSWERS
+// ==========================================
+model Exam {
+  id              String        @id @default(cuid())
+  code            String?       @default("H11001")
+  hskLevel        HskLevel
+  title           String
+  durationMinutes Int           @default(40)
+  totalQuestions  Int           @default(20)
+  totalScore      Int           @default(200)
+  passingScore    Int           @default(120)
+  isPublished     Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+
+  sections        ExamSection[]
+  attempts        ExamAttempt[]
+
+  @@map("exams")
+}
+
+model ExamSection {
+  id        String          @id @default(cuid())
+  examId    String
+  exam      Exam            @relation(fields: [examId], references: [id], onDelete: Cascade)
+  title     String
+  type      ExamSectionType
+  order     Int             @default(1)
+
+  questions ExamQuestion[]
+
+  @@map("exam_sections")
+}
+
+model ExamQuestion {
+  id             String      @id @default(cuid())
+  sectionId      String
+  section        ExamSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  questionNumber Int         @default(1)
+  questionType   String      @default("MULTIPLE_CHOICE")
+  audioUrl       String?
+  audioScript    String?     @db.Text
+  prompt         String      @db.Text
+  pinyin         String?     @db.Text
+  passage        String?     @db.Text
+  options        Json
+  correctAnswer  String
+  explanation    String?     @db.Text
+  score          Int         @default(5)
+
+  @@map("exam_questions")
+}
+
+model ExamAttempt {
+  id               String       @id @default(cuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examId           String
+  exam             Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  score            Int
+  passed           Boolean
+  timeSpentSeconds Int
+  answers          Json
+  createdAt        DateTime     @default(now())
+  examAnswers      ExamAnswer[]
+
+  @@map("exam_attempts")
+}
+
+model ExamAnswer {
+  id           String      @id @default(cuid())
+  attemptId    String
+  attempt      ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId   String
+  userAnswer   String      @db.Text
+  isCorrect    Boolean
+  scoreEarned  Decimal     @default(0.0) @db.Decimal(5, 2)
+  createdAt    DateTime    @default(now())
+
+  @@map("exam_answers")
+}
+
+// ==========================================
+// 7. USER VOCABULARY & FLASHCARDS & REVIEWS (SM-2)
+// ==========================================
+model FlashcardDeck {
+  id          String      @id @default(cuid())
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?     @db.Text
+  hskLevel    HskLevel?
+  isPublic    Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  flashcards  Flashcard[]
+
+  @@map("flashcard_decks")
+}
+
+model Flashcard {
+  id           String        @id @default(cuid())
+  deckId       String
+  deck         FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  vocabularyId String?
+  vocabulary   Vocabulary?   @relation(fields: [vocabularyId], references: [id], onDelete: SetNull)
+  front        String        @db.Text
+  back         String        @db.Text
+  hint         String?       @db.Text
+  createdAt    DateTime      @default(now())
+
+  @@index([deckId])
+  @@map("flashcards")
+}
+
+model UserFlashcard {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabularyId String
+  vocabulary   Vocabulary  @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  interval     Int         @default(1)
+  repetition   Int         @default(0)
+  easeFactor   Float       @default(2.5)
+  dueDate      DateTime    @default(now())
+  lastReview   DateTime?
+  state        String      @default("NEW")
+
+  reviewLogs   ReviewLog[]
+
+  @@unique([userId, vocabularyId])
+  @@index([userId, dueDate])
+  @@map("user_vocabulary")
+}
+
+model ReviewLog {
+  id               String        @id @default(cuid())
+  userFlashcardId  String
+  userFlashcard    UserFlashcard @relation(fields: [userFlashcardId], references: [id], onDelete: Cascade)
+  rating           Int
+  reviewedAt       DateTime      @default(now())
+  timeSpentSeconds Int           @default(0)
+
+  @@map("vocabulary_reviews")
+}
+
+// ==========================================
+// 8. LEARNING PROGRESS & STREAKS
+// ==========================================
+model UserProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleType String
+  itemId     String
+  completed  Boolean  @default(true)
+  score      Int?
+  updatedAt  DateTime @default(now())
+
+  @@unique([userId, moduleType, itemId])
+  @@map("learning_progress")
+}
+
+model UserStreak {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           String
+  minutesLearned Int      @default(0)
+  wordsLearned   Int      @default(0)
+
+  @@unique([userId, date])
+  @@map("learning_streaks")
+}
+
+// ==========================================
+// 9. ACHIEVEMENTS & USER ACHIEVEMENTS
+// ==========================================
+model Achievement {
+  id               String            @id @default(cuid())
+  code             String            @unique
+  title            String
+  description      String            @db.Text
+  icon             String?
+  points           Int               @default(50)
+  createdAt        DateTime          @default(now())
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// ==========================================
+// 10. READING & AUDIO MATERIALS
+// ==========================================
+model ReadingMaterial {
+  id               String    @id @default(cuid())
+  hskLevel         HskLevel  @default(HSK1)
+  title            String
+  contentChinese   String    @db.LongText
+  contentPinyin    String    @db.LongText
+  contentVi        String    @db.LongText
+  topic            String    @default("Cuộc sống hàng ngày")
+  estimatedMinutes Int       @default(5)
+  questions        Json?
+  createdAt        DateTime  @default(now())
+
+  @@index([hskLevel])
+  @@map("reading_materials")
+}
+
+model ListeningMaterial {
+  id            String    @id @default(cuid())
+  hskLevel      HskLevel  @default(HSK1)
+  title         String
+  description   String?   @db.Text
+  audioUrl      String?
+  transcript    String    @db.LongText
+  pinyin        String    @db.LongText
+  translationVi String    @db.LongText
+  duration      Int       @default(60)
+  questions     Json?
+  createdAt     DateTime  @default(now())
+
+  @@index([hskLevel])
+  @@map("audio_materials")
+}
+
+// ==========================================
+// 11. SPEAKING & WRITING ATTEMPTS
+// ==========================================
+model SpeakingScenario {
+  id            String    @id @default(cuid())
+  hskLevel      HskLevel  @default(HSK1)
+  title         String
+  description   String    @db.Text
+  roleAi        String
+  roleUser      String
+  initialPrompt String    @db.Text
+  systemPrompt  String    @db.Text
+  createdAt     DateTime  @default(now())
+
+  aiConversations  AiConversation[]
+  speakingAttempts SpeakingAttempt[]
+
+  @@map("speaking_scenarios")
+}
+
+model SpeakingAttempt {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenarioId    String?
+  scenario      SpeakingScenario? @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
+  spokenText    String            @db.Text
+  targetText    String            @db.Text
+  accuracyScore Decimal           @default(90.0) @db.Decimal(5, 2)
+  fluencyScore  Decimal           @default(85.0) @db.Decimal(5, 2)
+  feedback      String?           @db.Text
+  createdAt     DateTime          @default(now())
+
+  @@map("speaking_attempts")
+}
+
+model WritingExercise {
+  id              String           @id @default(cuid())
+  character       String           @unique
+  pinyin          String
+  meaningVi       String
+  strokeCount     Int
+  radical         String?
+  strokeData      Json?
+  createdAt       DateTime         @default(now())
+  writingAttempts WritingAttempt[]
+
+  @@map("writing_exercises")
+}
+
+model WritingAttempt {
+  id         String           @id @default(cuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId String?
+  exercise   WritingExercise? @relation(fields: [exerciseId], references: [id], onDelete: SetNull)
+  character  String
+  score      Decimal          @default(95.0) @db.Decimal(5, 2)
+  feedback   String?          @db.Text
+  createdAt  DateTime         @default(now())
+
+  @@map("writing_attempts")
+}
+
+// ==========================================
+// 12. AI CONVERSATIONS & MESSAGES
+// ==========================================
+model AiConversation {
+  id         String            @id @default(cuid())
+  userId     String
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scenarioId String?
+  scenario   SpeakingScenario? @relation(fields: [scenarioId], references: [id], onDelete: SetNull)
+  title      String
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  messages   AiMessage[]
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String         @db.Text
+  pinyin         String?        @db.Text
+  translation    String?        @db.Text
+  feedback       String?        @db.Text
+  audioUrl       String?
+  createdAt      DateTime       @default(now())
+
+  @@map("ai_messages")
+}
+
+// ==========================================
+// 13. USER DAILY GOALS
+// ==========================================
+model UserDailyGoal {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          String
+  targetMinutes Int      @default(20)
+  actualMinutes Int      @default(0)
+  targetWords   Int      @default(10)
+  actualWords   Int      @default(0)
+  isCompleted   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, date])
+  @@map("user_daily_goals")
+}
+
+// ==========================================
+// 14. DATA SOURCES & AUDIT LOGS
+// ==========================================
+model DataSource {
+  id           String       @id @default(cuid())
+  name         String
+  code         String       @unique
+  url          String?
+  licenseType  String       @default("Open Source")
+  attribution  String?      @db.Text
+  status       String       @default("ACTIVE")
+  totalRecords Int          @default(0)
+  lastSyncedAt DateTime?
+  createdAt    DateTime     @default(now())
+
+  vocabularies Vocabulary[]
+  importLogs   DataImportLog[]
+
+  @@map("data_sources")
+}
+
+model DataImportLog {
+  id              String     @id @default(cuid())
+  sourceId        String
+  source          DataSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  status          String     @default("SUCCESS")
+  recordsImported Int        @default(0)
+  errorMessage    String?    @db.Text
+  createdAt       DateTime   @default(now())
+
+  @@map("data_import_logs")
+}
