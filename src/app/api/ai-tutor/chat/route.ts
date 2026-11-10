@@ -18,17 +18,29 @@ export async function POST(request: Request) {
     const targetHsk = user?.profile?.targetHskLevel || 'HSK1';
     let result: { answer: string; source: string; ragItems?: any };
 
-    // 1. Try Google Gemini if configured
-    if (isGeminiConfigured(apiKey)) {
+    // 1. Try Google Gemini with effective API key (client key or server env key)
+    const serverKey = process.env.GEMINI_API_KEY;
+    const effectiveKey = (apiKey && apiKey.trim().length > 10) ? apiKey.trim() : serverKey;
+
+    if (isGeminiConfigured(effectiveKey)) {
       try {
-        result = await askGeminiAiTutor(message, targetHsk, apiKey, history, modelName);
+        result = await askGeminiAiTutor(message, targetHsk, effectiveKey, history, modelName);
       } catch (geminiError) {
-        console.warn('Gemini execution error, falling back to local linguistic engine:', geminiError);
-        result = await askChineseAiTutor(message, targetHsk, apiKey);
+        console.warn('Gemini execution error, trying server fallback:', geminiError);
+        if (serverKey && serverKey !== effectiveKey) {
+          try {
+            result = await askGeminiAiTutor(message, targetHsk, serverKey, history, modelName);
+          } catch (serverErr) {
+            console.warn('Server Gemini fallback failed, using intelligent conversational engine:', serverErr);
+            result = await askChineseAiTutor(message, targetHsk);
+          }
+        } else {
+          result = await askChineseAiTutor(message, targetHsk);
+        }
       }
     } else {
-      // 2. Local Linguistic Engine
-      result = await askChineseAiTutor(message, targetHsk, apiKey);
+      // 2. Local Intelligent Conversational Engine
+      result = await askChineseAiTutor(message, targetHsk);
     }
 
     // Save to conversation history if user is logged in

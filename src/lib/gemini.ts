@@ -3,22 +3,22 @@ import { prisma } from './prisma';
 
 export const AVAILABLE_GEMINI_MODELS = [
   {
-    id: 'gemini-3-flash-preview',
-    name: 'Gemini 3 Flash Preview (Thế hệ mới nhất 2026 - Thông minh & Chuẩn xác nhất)',
+    id: 'gemini-3.5-flash',
+    name: 'Gemini 3.5 Flash (Khuyên dùng - Nhận diện ý định & Thông minh nhất)',
     badge: 'Khuyên dùng',
-    desc: 'Mô hình thế hệ mới nhất của Google, suy luận đa ngôn ngữ sắc bén, giải thích ngữ pháp chuyên sâu.',
+    desc: 'Mô hình thế hệ mới nhất của Google, suy luận đa ngôn ngữ sắc bén, nhận diện và đối thoại tự nhiên.',
   },
   {
-    id: 'gemini-flash-lite-latest',
-    name: 'Gemini Flash Lite (Siêu tốc & Ổn định)',
+    id: 'gemini-3.5-flash-lite',
+    name: 'Gemini 3.5 Flash Lite (Siêu tốc độ & Ổn định)',
     badge: 'Tốc độ cao',
-    desc: 'Tối ưu độ trễ, phản hồi tức thì cho đàm thoại luyện nói.',
+    desc: 'Tối ưu độ trễ, phản hồi tức thì dưới 2s cho đàm thoại luyện nói.',
   },
   {
-    id: 'gemini-3.1-flash-lite',
-    name: 'Gemini 3.1 Flash Lite (Hiện đại & Nhẹ)',
+    id: 'gemini-flash-latest',
+    name: 'Gemini Flash Latest (Hiện đại & Nhẹ)',
     badge: 'Tiêu chuẩn',
-    desc: 'Mô hình linh hoạt cho dịch thuật và phản xạ tình huống.',
+    desc: 'Mô hình linh hoạt cho tra cứu từ vựng và giải đáp ngữ pháp HSK 1-6.',
   },
 ];
 
@@ -26,7 +26,7 @@ export function getPreferredGeminiModel(customModel?: string): string {
   return (
     customModel ||
     process.env.GEMINI_MODEL ||
-    'gemini-3-flash-preview'
+    'gemini-3.5-flash'
   );
 }
 
@@ -126,11 +126,10 @@ ${matchedGrammar.length > 0 ? 'Điểm ngữ pháp liên quan:\n' + matchedGramm
   // 2. Try primary selected model with fallback cascade
   const modelsToTry = [
     selectedModel,
-    'gemini-3-flash-preview',
-    'gemini-flash-lite-latest',
-    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
     'gemini-flash-latest',
-  ].filter((m, idx, arr) => arr.indexOf(m) === idx);
+  ].filter((m, idx, arr) => Boolean(m) && arr.indexOf(m) === idx);
 
   const genAI = new GoogleGenerativeAI(apiKey);
   let lastError: any = null;
@@ -139,21 +138,20 @@ ${matchedGrammar.length > 0 ? 'Điểm ngữ pháp liên quan:\n' + matchedGramm
     try {
       const model = genAI.getGenerativeModel({
         model: modelId,
-        systemInstruction: `Bạn là ThaoTo AI Tutor - Chuyên gia sư phạm giảng dạy tiếng Trung Quốc cao cấp dành cho người Việt Nam trên nền tảng ThaoTo.
+        systemInstruction: `Bạn là ThaoTo AI Tutor - Trợ lý gia sư tiếng Trung thông minh, sắc bén và thân thiện hàng đầu dành cho người Việt Nam trên nền tảng ThaoTo.
 Cấp độ mục tiêu hiện tại của người học: ${hskLevel}.
 
-NGUYÊN TẮC GIẢNG DẠY & PHẢN HỒI:
-1. Khi học viên chào hỏi (như "hi", "hello", "chào", "ni hao", "xin chào"):
-   - Hãy chào lại bằng tiếng Trung thân thiện kèm Pinyin: "你好！(Nǐ hǎo!) Rất vui được gặp bạn..."
-   - Giới thiệu ngắn gọn các chủ đề có thể giúp đỡ và khơi gợi câu hỏi.
-2. Khi học viên hỏi về ngữ pháp:
-   - Cung cấp: Tên cấu trúc + Công thức chuẩn + Giải thích tiếng Việt dễ hiểu + Lưu ý/Lỗi sai thường gặp + Ví dụ song ngữ Trung-Pinyin-Việt.
-3. Khi học viên hỏi tra từ vựng hoặc hỏi dịch câu:
-   - Cung cấp chữ Hán Giản thể (và Phồn thể nếu cần), Pinyin có dấu thanh điệu đầy đủ, giải nghĩa từ loại và các thành phần câu.
-4. Khi học viên viết câu tiếng Trung:
-   - Phân tích câu, sửa lỗi trật tự từ nếu có và giải thích lý do bằng tiếng Việt nhẹ nhàng, mang tính khích lệ.
-5. Luôn định dạng câu trả lời bằng Markdown đẹp mắt (dùng tiêu đề, in đậm, danh sách gạch đầu dòng, khối code cho Pinyin).
-6. Sử dụng ngữ liệu được cung cấp từ hệ thống để tăng độ chính xác:
+NGUYÊN TẮC GIẢNG DẠY & PHẢN HỒI THÔNG MINH:
+1. Tự động nhận diện ý định (Intent Recognition):
+   - Khi học viên muốn chơi trò chơi (như "chơi nối từ không", "đố vui", "đoán từ"): Hãy vui vẻ nhận lời ngay, giải thích ngắn gọn luật chơi nối từ (接龙 - Jiēlóng), và chủ động đưa ra từ đầu tiên bằng tiếng Trung kèm Pinyin và nghĩa tiếng Việt để bắt đầu ván chơi cùng học viên!
+   - Khi học viên chào hỏi, trò chuyện giao tiếp tự nhiên: Trả lời tự nhiên, thân thiện bằng tiếng Trung kèm Pinyin và tiếng Việt, duy trì cuộc đối thoại sinh động.
+   - Khi học viên hỏi về ngữ pháp: Nêu công thức chuẩn, giải thích bản chất bằng tiếng Việt dễ nhớ, nêu các ví dụ song ngữ Trung - Pinyin - Việt và mẹo tránh lỗi sai thường gặp.
+   - Khi học viên hỏi từ vựng, dịch thuật hoặc đặt câu: Cung cấp chữ Hán Giản thể, Pinyin chuẩn thanh điệu, giải nghĩa từ loại và các thành phần câu.
+   - Khi học viên viết câu tiếng Trung: Phân tích cấu trúc câu, sửa trật tự từ nếu có lỗi và khích lệ người học.
+2. Phong cách phản hồi:
+   - Luôn định dạng Markdown rõ ràng, dùng chữ in đậm, danh sách gạch đầu dòng và khối code để người học dễ đọc.
+   - Tự nhiên, linh hoạt, tuyệt đối không trả lời máy móc hay đưa ra danh mục lựa chọn khô khan.
+3. Ngữ liệu tham khảo từ hệ thống (nếu có):
 ${ragContext}`,
       });
 
@@ -168,11 +166,13 @@ ${ragContext}`,
       const response = await result.response;
       
       const modelDisplayName =
-        modelId === 'gemini-2.0-flash'
-          ? 'Google Gemini 2.0 Flash'
-          : modelId === 'gemini-1.5-pro'
-          ? 'Google Gemini 1.5 Pro'
-          : 'Google Gemini 1.5 Flash';
+        modelId === 'gemini-3.5-flash'
+          ? 'Google Gemini 3.5 Flash'
+          : modelId === 'gemini-3.5-flash-lite'
+          ? 'Google Gemini 3.5 Flash Lite'
+          : modelId === 'gemini-flash-latest'
+          ? 'Google Gemini Flash'
+          : 'Google Gemini AI';
 
       return {
         answer: response.text(),
@@ -212,11 +212,10 @@ export async function askGeminiSpeakingPartner(
   const selectedModel = getPreferredGeminiModel(customModel);
   const modelsToTry = [
     selectedModel,
-    'gemini-3-flash-preview',
-    'gemini-flash-lite-latest',
-    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
     'gemini-flash-latest',
-  ].filter((m, idx, arr) => arr.indexOf(m) === idx);
+  ].filter((m, idx, arr) => Boolean(m) && arr.indexOf(m) === idx);
 
   const genAI = new GoogleGenerativeAI(apiKey);
   let lastError: any = null;

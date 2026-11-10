@@ -496,18 +496,48 @@ ${v.meaningEn ? `- **Tiếng Anh:** ${v.meaningEn}\n` : ''}
 **Câu ví dụ minh họa:**
 ${v.examples.map((ex: any) => `• **${ex.chinese}**\n  *Pinyin:* ${ex.pinyin}\n  *Dịch nghĩa:* ${ex.vietnamese}`).join('\n')}`;
   }
-  // Case H: General Helpful Guidance
+  // Case H: Word chain game (Nối từ)
+  else if (normalized.includes('nối từ') || normalized.includes('chơi nối từ') || normalized.includes('jiē lóng') || normalized.includes('jielong')) {
+    responseText = `### 🎮 Cùng chơi nối từ tiếng Trung (接龙 - Jiēlóng)!
+
+Rất vui được chơi cùng bạn! Trò chơi nối từ sẽ giúp bạn mở rộng vốn từ vựng tiếng Trung cực kỳ nhanh.
+
+**Luật chơi:**
+1. Mỗi lượt người chơi sẽ tìm một từ vựng tiếng Trung mới bắt đầu bằng **chữ Hán cuối cùng** của từ người trước.
+2. Cung cấp kèm **Pinyin** và **nghĩa tiếng Việt**.
+
+---
+
+Tôi xin bắt đầu trước với từ đầu tiên nhé:
+> **老师**
+> * Pinyin: \`Lǎoshī\`
+> * Dịch nghĩa: **Thầy giáo / Cô giáo**
+
+👉 Giờ đến lượt bạn! Hãy tìm một từ vựng bắt đầu bằng chữ **师 (shī)** nhé! *(Gợi ý: 师傅 - shīfu, 师生 - shīshēng)*`;
+  }
+  // Case I: Conversational encouragement / Chat
+  else if (normalized.includes('khỏe không') || normalized.includes('bạn là ai') || normalized.includes('thế nào rồi') || normalized.includes('giúp gì')) {
+    responseText = `### 🇨🇳 ThaoTo AI Tutor luôn sẵn sàng hỗ trợ bạn!
+
+Tôi rất khỏe và luôn tràn đầy năng lượng để đồng hành cùng bạn học tiếng Trung mỗi ngày! 😊
+
+Bạn có thể trò chuyện với tôi bằng tiếng Việt hoặc tiếng Trung:
+- Chơi nối từ tiếng Trung (接龙).
+- Hỏi bất kỳ thắc mắc ngữ pháp, cách đặt câu, tra từ vựng.
+- Luyện dịch các đoạn hội thoại giao tiếp thực tế.
+
+Hôm nay bạn muốn cùng tôi khám phá chủ đề gì nào?`;
+  }
+  // Case J: General Natural Response
   else {
-    responseText = `### 🤖 Phản hồi từ ThaoTo AI Tutor
+    responseText = `### 🇨🇳 ThaoTo AI Tutor tiếp nhận: *" ${trimmed} "*
 
-Tôi đã tiếp nhận câu hỏi của bạn: *" ${trimmed} "*
+Chào bạn! Với câu hỏi hoặc yêu cầu này, tôi có thể hỗ trợ bạn dịch nghĩa, phân tích ngữ pháp tiếng Trung hoặc cùng bạn đối thoại thực tế.
 
-Để hỗ trợ bạn tốt nhất về học tập tiếng Trung:
-1. **Nếu bạn muốn tra từ vựng:** Hãy gõ từ tiếng Việt hoặc chữ Hán (Ví dụ: *học tập*, *máy bay*, *学习*, *朋友*).
-2. **Nếu bạn muốn học ngữ pháp:** Hãy hỏi về các cấu trúc bạn chưa rõ (Ví dụ: *câu chữ 把*, *câu so sánh 比*, *phân biệt 的 得 地*, *phân biệt 会 và 能*).
-3. **Nếu bạn muốn dịch câu:** Hãy ghi rõ: *Dịch câu: [Nội dung cần dịch]*, tôi sẽ phân tích ngữ pháp và cung cấp Pinyin chuẩn.
+- **Nếu bạn muốn dịch sang tiếng Trung:** Hãy gửi trực tiếp câu bạn muốn nói, tôi sẽ cung cấp chữ Hán Giản thể kèm Pinyin có dấu thanh và cách đọc chuẩn.
+- **Nếu bạn muốn phân tích một câu:** Hãy gõ câu tiếng Trung đó, tôi sẽ bóc tách cấu trúc Chủ ngữ - Vị ngữ - Bổ ngữ và sửa lỗi giúp bạn.
 
-Bạn muốn tôi giải thích chi tiết hơn về phần nào trong câu hỏi này?`;
+Hãy cho tôi biết cụ thể điều bạn cần nhé! 🧧 加油 (Jiāyóu!)`;
   }
 
   return {

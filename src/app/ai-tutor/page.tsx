@@ -20,22 +20,22 @@ import { AudioButton } from '@/components/AudioPlayer';
 
 const GEMINI_MODELS = [
   {
-    id: 'gemini-3-flash-preview',
-    name: 'Gemini 3 Flash Preview',
+    id: 'gemini-3.5-flash',
+    name: 'Gemini 3.5 Flash',
     tag: 'Thế hệ mới nhất 2026',
     badge: 'Khuyên dùng',
-    desc: 'Thế hệ AI mới nhất từ Google, phân tích ngữ pháp chuyên sâu và giải nghĩa sắc bén.',
+    desc: 'Thế hệ AI mới nhất từ Google, tự động nhận diện ý định (đố vui, nối từ, phân tích ngữ pháp, dịch thuật).',
   },
   {
-    id: 'gemini-flash-lite-latest',
-    name: 'Gemini Flash Lite',
+    id: 'gemini-3.5-flash-lite',
+    name: 'Gemini 3.5 Flash Lite',
     tag: 'Siêu tốc',
-    badge: 'Phản xạ nhanh',
+    badge: 'Phản xạ nhanh (<2s)',
     desc: 'Tối ưu tốc độ phản hồi cực nhanh, phù hợp cho đối thoại tức thì.',
   },
   {
-    id: 'gemini-3.1-flash-lite',
-    name: 'Gemini 3.1 Flash Lite',
+    id: 'gemini-flash-latest',
+    name: 'Gemini Flash Latest',
     tag: 'Tiêu chuẩn',
     badge: 'Ổn định',
     desc: 'Cân bằng giữa tốc độ và độ chính xác cho ngữ pháp HSK 1-6.',

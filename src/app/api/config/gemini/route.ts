@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const key = process.env.GEMINI_API_KEY || '';
-  const currentModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const currentModel = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
   const isConfigured = Boolean(key && key.trim().length > 10);
   const preview = isConfigured ? `${key.slice(0, 6)}...${key.slice(-4)}` : null;
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     const cleanKey = apiKey.trim();
-    const cleanModel = modelName && typeof modelName === 'string' ? modelName.trim() : 'gemini-3-flash-preview';
+    const cleanModel = modelName && typeof modelName === 'string' ? modelName.trim() : 'gemini-3.5-flash';
 
     // 1. Verify key with Google Gemini API directly
     try {
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       console.warn(`Test call with model ${cleanModel} failed, trying fallback to flash-lite:`, testErr);
       try {
         const genAI = new GoogleGenerativeAI(cleanKey);
-        const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-flash-lite-latest' });
+        const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
         await fallbackModel.generateContent('ping');
       } catch (fallbackErr: any) {
         return NextResponse.json(

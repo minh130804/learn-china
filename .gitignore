@@ -1,7 +1,6 @@
 node_modules
 .next
-out
-.env
 .DS_Store
-*.log
-
+.env
+pnpm-lock.yaml
+package-lock.json
